@@ -1,13 +1,28 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      // FIX for "Cannot set property fetch of #<Window> which has only a getter"
+      (function() {
+        try {
+          const original = window.fetch;
+          Object.defineProperty(window, 'fetch', {
+            get: function() { return original; },
+            set: function() { console.warn('Blocked fetch override'); },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          // If we can't define it, it's already special
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Zoya AI - Neural Assistant</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
