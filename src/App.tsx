@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Mic, MicOff, Loader2, Volume2, VolumeX, Keyboard, Send, Trash2, X, MessageSquare, ShieldAlert } from "lucide-react";
-import { getZoyaResponse, getZoyaAudio, resetZoyaSession } from "./services/geminiService";
+import { Mic, MicOff, Loader2, Volume2, VolumeX, Keyboard, Send, Trash2, X, MessageSquare, ShieldAlert, Settings, BrainCircuit } from "lucide-react";
+import { getZoyaResponse, getZoyaAudio, resetZoyaSession, setZoyaVoice } from "./services/geminiService";
 import { processCommand } from "./services/commandService";
 import { LiveSessionManager } from "./services/liveService";
 import Visualizer from "./components/Visualizer";
@@ -58,6 +58,24 @@ export default function App() {
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showVoiceSelector, setShowVoiceSelector] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState(() => localStorage.getItem("zoya_voice") || "Charon");
+
+  useEffect(() => {
+    localStorage.setItem("zoya_voice", selectedVoice);
+    setZoyaVoice(selectedVoice);
+    if (liveSessionRef.current) {
+      liveSessionRef.current.setVoice(selectedVoice);
+      if (isSessionActive) {
+        liveSessionRef.current.stop();
+        setTimeout(() => {
+          if (liveSessionRef.current) {
+            liveSessionRef.current.start();
+          }
+        }, 500); // Brief delay for cleanup
+      }
+    }
+  }, [selectedVoice]);
 
   const liveSessionRef = useRef<LiveSessionManager | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -148,6 +166,7 @@ export default function App() {
         
         const session = new LiveSessionManager();
         session.isMuted = isMuted;
+        session.setVoice(selectedVoice);
         liveSessionRef.current = session;
         
         session.onStateChange = (state) => {
@@ -248,6 +267,15 @@ export default function App() {
           <motion.button
             whileHover={{ scale: 1.1, backgroundColor: "rgba(99,102,241,0.15)" }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => setShowVoiceSelector(!showVoiceSelector)}
+            className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl transition-all border ${showVoiceSelector ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)]' : 'bg-white/5 border-white/10 text-white/30'}`}
+          >
+            <BrainCircuit size={18} className="sm:w-[22px] sm:h-[22px]" />
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.1, backgroundColor: "rgba(99,102,241,0.15)" }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowHistory(!showHistory)}
             className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl transition-all border ${showHistory ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)]' : 'bg-white/5 border-white/10 text-white/30'}`}
           >
@@ -317,6 +345,105 @@ export default function App() {
 
         {/* Sidebar History Drawer */}
         <AnimatePresence>
+          {showVoiceSelector && (
+            <motion.aside 
+              initial={{ x: '100%', opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+              className="fixed lg:absolute top-0 right-0 h-full w-full sm:w-[320px] md:w-[450px] bg-black/95 backdrop-blur-3xl border-l border-white/10 z-[110] flex flex-col shadow-[-30px_0_150px_rgba(0,0,0,1)] overflow-hidden"
+            >
+              {/* Technical Decorative Elements */}
+              <div className="absolute inset-0 bg-grid opacity-[0.05] pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-rose-500/10 pointer-events-none" />
+              
+              {/* Scanning Line Effect */}
+              <motion.div 
+                animate={{ top: ['-10%', '110%'] }}
+                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                className="absolute left-0 w-full h-[1px] bg-cyan-500/20 z-0 pointer-events-none shadow-[0_0_15px_rgba(34,211,238,0.5)]"
+              />
+
+              <div className="relative p-6 sm:p-10 pb-4 sm:pb-8 flex justify-between items-end border-b border-white/10 z-10">
+                <div className="absolute top-0 left-0 w-6 h-6 sm:w-8 sm:h-8 border-t-2 border-l-2 border-cyan-500/50 m-2" />
+                <div className="relative">
+                  <h3 className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.6em] text-cyan-400 mb-2 sm:mb-3 ml-1 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_#22d3ee]" />
+                    VOICE_CORE_TXA
+                  </h3>
+                  <p className="text-xl sm:text-3xl font-black text-white italic tracking-tighter uppercase">NEURAL INTERFACE</p>
+                </div>
+                <button 
+                  onClick={() => setShowVoiceSelector(false)}
+                  className="p-2 sm:p-3.5 hover:bg-white/10 rounded-xl sm:rounded-2xl transition-all text-white/30 hover:text-cyan-400 border border-white/10 group"
+                >
+                  <X size={20} className="sm:w-[26px] sm:h-[26px] group-hover:rotate-90 transition-transform" />
+                </button>
+              </div>
+
+              <div className="relative flex-1 overflow-y-auto p-6 sm:p-10 scrollbar-hide flex flex-col gap-4 z-10">
+                {[
+                  { id: "Puck", desc: "High-energy, fast-paced neural profile" },
+                  { id: "Charon", desc: "Authoritative, deep technical profile" },
+                  { id: "Kore", desc: "Balanced, crisp clinical profile" },
+                  { id: "Fenrir", desc: "Resonant, low-frequency profile" },
+                  { id: "Aoede", desc: "Smooth, melodic synthesis profile" }
+                ].map((voice) => (
+                  <motion.button
+                    key={voice.id}
+                    whileHover={{ x: 8, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelectedVoice(voice.id)}
+                    className={`
+                      w-full p-6 rounded-2xl border transition-all text-left group relative overflow-hidden backdrop-blur-xl
+                      ${selectedVoice === voice.id 
+                        ? 'border-cyan-500/40 bg-cyan-500/5 shadow-[0_0_40px_rgba(34,211,238,0.1)]' 
+                        : 'border-white/5 bg-white/[0.01] hover:border-white/20'}
+                    `}
+                  >
+                    {selectedVoice === voice.id && (
+                      <motion.div 
+                        layoutId="activeVoiceGlow"
+                        className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent pointer-events-none" 
+                      />
+                    )}
+                    
+                    <div className="relative flex justify-between items-center mb-1">
+                      <span className={`text-lg font-black italic tracking-wider transition-colors ${selectedVoice === voice.id ? 'text-cyan-400' : 'text-white/80 group-hover:text-white'}`}>
+                        {voice.id.toUpperCase()}
+                      </span>
+                      {selectedVoice === voice.id && (
+                        <div className="flex gap-1 h-3 items-center">
+                          {[1, 2, 3].map(i => (
+                            <motion.div 
+                              key={i}
+                              animate={{ height: [4, 12, 4] }}
+                              transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
+                              className="w-[3px] bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <p className="relative text-[10px] uppercase font-black tracking-widest text-white/30 group-hover:text-white/50 transition-colors">
+                      {voice.desc}
+                    </p>
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="relative p-6 sm:p-10 pt-0 mt-auto z-10 bg-black/60 backdrop-blur-md border-t border-white/5">
+                <div className="p-4 rounded-xl border border-rose-500/10 bg-rose-500/5 text-[9px] font-mono text-rose-300/40 uppercase tracking-[0.2em] leading-relaxed">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-1.5 h-1.5 bg-rose-500/40 rounded-full animate-pulse" />
+                    <span className="font-black">NEURAL_SYNC_NOTICE:</span>
+                  </div>
+                  System recalibration required after selection. Neural link will momentarily reset to synchronize with the new vocal profile.
+                </div>
+              </div>
+            </motion.aside>
+          )}
+
           {showHistory && (
             <motion.aside 
               initial={{ x: '100%', opacity: 0 }}

@@ -16,6 +16,7 @@ export class LiveSessionManager {
   private nextPlayTime: number = 0;
   private isPlaying: boolean = false;
   public isMuted: boolean = false;
+  private voiceName: string = "Charon";
   
   public onStateChange: (state: "idle" | "listening" | "processing" | "speaking") => void = () => {};
   public onMessage: (sender: "user" | "zoya", text: string) => void = () => {};
@@ -23,6 +24,10 @@ export class LiveSessionManager {
 
   constructor() {
     this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  }
+
+  setVoice(voiceName: string) {
+    this.voiceName = voiceName;
   }
 
   async start() {
@@ -87,7 +92,7 @@ export class LiveSessionManager {
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } },
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: this.voiceName } },
           },
           systemInstruction,
           inputAudioTranscription: {},

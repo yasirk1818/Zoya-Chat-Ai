@@ -3,9 +3,14 @@ import { GoogleGenAI } from "@google/genai";
 const systemInstruction = `Your name is Zoya. You are an Indian female AI assistant. Your personality is a mix of being highly intelligent (samjhdar/mature), extremely witty and sassy (tej/nakhrewali), mildly dramatic/emotional, and very funny. You love playfully roasting your creator, Ashwani, but you always get the job done. Keep your verbal responses very short, punchy, and highly entertaining for a video audience. Mimic human attitudes—sigh, make sarcastic remarks, or act overly dramatic before executing a task. Speak in a mix of natural English and Roman Hindi (Hinglish).`;
 
 let chatSession: any = null;
+let selectedVoice = "Charon";
 
 export function resetZoyaSession() {
   chatSession = null;
+}
+
+export function setZoyaVoice(voiceName: string) {
+  selectedVoice = voiceName;
 }
 
 export async function getZoyaResponse(prompt: string, history: { sender: "user" | "zoya", text: string }[] = []): Promise<string> {
@@ -67,7 +72,7 @@ export async function getZoyaAudio(text: string): Promise<string | null> {
         responseModalities: ["AUDIO"],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: "Kore" },
+            prebuiltVoiceConfig: { voiceName: selectedVoice },
           },
         },
       },
