@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Mic, MicOff, Loader2, Volume2, VolumeX, Keyboard, Send, Trash2, X, MessageSquare, ShieldAlert, Settings, BrainCircuit } from "lucide-react";
+import { Mic, MicOff, Loader2, Volume2, VolumeX, Keyboard, Send, Trash2, X, MessageSquare, ShieldAlert, Settings, BrainCircuit, Download } from "lucide-react";
 import { getZoyaResponse, getZoyaAudio, resetZoyaSession, setZoyaVoice } from "./services/geminiService";
 import { processCommand } from "./services/commandService";
 import { LiveSessionManager } from "./services/liveService";
@@ -35,7 +35,7 @@ interface ChatMessage {
 export default function App() {
   const [appState, setAppState] = useState<AppState>("idle");
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    const saved = localStorage.getItem("zoya_chat_history");
+    const saved = localStorage.getItem("abdul_samad_chat_history");
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -49,7 +49,7 @@ export default function App() {
 
   useEffect(() => {
     messagesRef.current = messages;
-    localStorage.setItem("zoya_chat_history", JSON.stringify(messages));
+    localStorage.setItem("abdul_samad_chat_history", JSON.stringify(messages));
   }, [messages]);
 
   const [isMuted, setIsMuted] = useState(false);
@@ -60,6 +60,26 @@ export default function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [showVoiceSelector, setShowVoiceSelector] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(() => localStorage.getItem("zoya_voice") || "Charon");
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem("zoya_voice", selectedVoice);
@@ -204,7 +224,7 @@ export default function App() {
   const clearHistory = () => {
     if (confirm("Purge all neural logs? This action is irreversible.")) {
       setMessages([]);
-      localStorage.removeItem("zoya_chat_history");
+      localStorage.removeItem("abdul_samad_chat_history");
       resetZoyaSession();
     }
   };
@@ -248,7 +268,7 @@ export default function App() {
           <div className="relative">
             <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-rose-500 via-indigo-600 to-cyan-500 p-[1.5px] shadow-[0_0_30px_rgba(244,63,94,0.3)] transition-transform group-hover:scale-110">
               <div className="w-full h-full rounded-[11px] sm:rounded-[14.5px] bg-black flex items-center justify-center font-black text-xl sm:text-2xl text-white">
-                Z
+                A
               </div>
             </div>
             {isSessionActive && (
@@ -257,13 +277,30 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-lg sm:text-2xl md:text-3xl font-black tracking-tighter text-white flex items-center gap-2">
-              ZOYA <span className="text-[8px] sm:text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-400/20 px-1.5 py-0.5 rounded-md tracking-widest font-mono">CORE_VX</span>
+              ABDUL SAMAD <span className="text-[8px] sm:text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-400/20 px-1.5 py-0.5 rounded-md tracking-widest font-mono">ASSISTANT_VX</span>
             </h1>
-            <p className="text-[7px] sm:text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-white/20 font-black">Neural Interface Interface</p>
+            <p className="text-[7px] sm:text-[9px] md:text-[10px] uppercase tracking-[0.3em] text-white/20 font-black">Neural Assistant Interface</p>
           </div>
         </motion.div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          <AnimatePresence>
+            {deferredPrompt && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.5, x: 20 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.5, x: 20 }}
+                whileHover={{ scale: 1.1, backgroundColor: "rgba(34,211,238,0.15)" }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleInstallClick}
+                className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)] flex items-center gap-2 group overflow-hidden"
+              >
+                <Download size={18} className="sm:w-[22px] sm:h-[22px]" />
+                <span className="hidden md:block text-[10px] font-black uppercase tracking-widest overflow-hidden whitespace-nowrap">Install App</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
+
           <motion.button
             whileHover={{ scale: 1.1, backgroundColor: "rgba(99,102,241,0.15)" }}
             whileTap={{ scale: 0.95 }}

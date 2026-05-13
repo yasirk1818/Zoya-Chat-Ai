@@ -1,6 +1,6 @@
 {
-  "name": "Zoya - AI Voice Assistant",
-  "description": "A sassy, witty, and intelligent Indian female AI voice assistant.",
+  "name": "Abdul Samad Ai Voice Assistant",
+  "description": "A smart, witty, and intelligent AI voice assistant.",
   "requestFramePermissions": [
     "microphone"
   ]
